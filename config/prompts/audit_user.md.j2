@@ -1,0 +1,87 @@
+Erstelle einen vollständigen Audit-Report für folgende Website:
+
+## Website-Daten
+
+**URL:** {{ url }}
+**Domain:** {{ domain }}
+**Gescrapt am:** {{ scraped_date }}
+**Gecrawlte Seiten:** {{ pages_crawled }}
+
+---
+
+## Inhalte & Struktur
+
+**Seitentitel (title-Tag):** {{ meta.title | default("FEHLT") }}
+**Meta-Description:** {{ meta.description | default("FEHLT") }}
+**Meta-Robots:** {{ meta.robots | default("nicht gesetzt") }}
+**Canonical URL:** {{ meta.canonical | default("nicht gesetzt") }}
+**Viewport Meta:** {{ meta.viewport | default("FEHLT") }}
+**Open Graph Titel:** {{ meta.og_title | default("fehlt") }}
+**Open Graph Image:** {{ meta.og_image | default("fehlt") }}
+
+**H1-Tags gefunden:** {{ content.h1_count }} (erwartet: genau 1)
+**H1-Texte:** {{ content.h1_texts | join(", ") | default("keine") }}
+**H2-Tags:** {{ content.h2_count }}
+**H3-Tags:** {{ content.h3_count }}
+
+**CTAs gefunden ({{ content.ctas | length }}):**
+{% for cta in content.ctas %}- "{{ cta.text }}" → {{ cta.href }}
+{% endfor %}
+
+**Bilder gesamt:** {{ content.images_total }}
+**Bilder ohne Alt-Text:** {{ content.images_missing_alt }}
+**Bilder mit leerem Alt:** {{ content.images_empty_alt }}
+
+---
+
+## Farben & Kontrast
+
+**Primärfarben (Palette):**
+{% for color in colors.palette %}- {{ color.hex }} — {{ color.usage }} ({{ color.name }})
+{% endfor %}
+
+**Farbkontrast-Paare (fg/bg):**
+{% for pair in colors.contrast_pairs %}- Vordergrund: {{ pair.fg }} / Hintergrund: {{ pair.bg }} → Verhältnis: {{ pair.ratio }}:1 ({{ "✓ PASS" if pair.ratio >= 4.5 else "✗ FAIL AA" }})
+{% endfor %}
+
+---
+
+## Typografie
+
+**Schriftfamilien:** {{ typography.families | join(", ") }}
+**Body-Schriftgröße:** {{ typography.body_size | default("nicht ermittelt") }}
+**Zeilenhöhe (line-height):** {{ typography.line_height | default("nicht ermittelt") }}
+**Schriftgewichte:** {{ typography.weights | join(", ") }}
+
+---
+
+## Icon-Bibliotheken
+
+{% if icons.libraries %}**Erkannte Bibliotheken:** {{ icons.libraries | join(", ") }}
+{% else %}Keine bekannte Icon-Bibliothek erkannt.
+{% endif %}
+**Custom SVGs:** {{ icons.svg_count }}
+
+---
+
+## Seitenhierarchie
+
+**Seitenbaum (bis Tiefe 3):**
+```
+{{ sitemap.tree_text }}
+```
+
+---
+
+## Technische Hinweise
+
+**Externe Skripte:** {{ tech.external_scripts }}
+**Externe Stylesheets:** {{ tech.external_stylesheets }}
+**Lazy Loading (img loading=lazy):** {{ tech.lazy_images }}
+**SSL (HTTPS):** {{ "✓" if url.startswith("https") else "✗ FEHLT" }}
+**Impressum-Link erkannt:** {{ "✓" if tech.has_impressum else "✗" }}
+**Datenschutz-Link erkannt:** {{ "✓" if tech.has_privacy else "✗" }}
+
+---
+
+Analysiere alle oben stehenden Daten und erfasse jeden Befund mit `record_finding`. Setze dann die Scores mit `set_category_score` und schließe mit `generate_report` ab.
