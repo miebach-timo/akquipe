@@ -27,7 +27,30 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(cmdkey /delete:LegacyGeneric:target=git:https://github.com)",
+      "Bash(cmdkey /delete:LegacyGeneric:target=https://github.com)",
+      "Bash(python -m streamlit run app.py --server.headless false)",
+      "Bash(python -m streamlit run app.py --browser.gatherUsageStats false)",
+      "Bash(python -m streamlit run app.py)",
+      "Bash(python pipeline.py run https://www.avenga.com/)",
+      "Bash(python pipeline.py resume avenga_com_20260511_005130 --stages 3,4,5)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://api.anthropic.com)",
+      "Bash(python pipeline.py list-runs)",
+      "Bash(python -c \"import h2; print\\('h2 installed'\\)\")",
+      "Bash(python -c \"import httpx; print\\('httpx version:', httpx.__version__\\)\")",
+      "Bash(python pipeline.py run https://hdg-packaging.com/)",
+      "Bash(where npx *)",
+      "Bash(python pipeline.py resume hdg_packaging_com_20260511_115701 --stages 4,5)",
+      "Bash(streamlit run *)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(python pipeline.py run https://www.foto-lindlar.de/fuenger-foto/ --stages 1,2,3,4)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501)",
+      "Bash(python pipeline.py resume foto_lindlar_de_20260512_180612 --stages 5,6)",
+      "Bash(npx create-next-app@latest --version)"
     ]
   }
 }

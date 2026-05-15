@@ -14,6 +14,7 @@ from stages.stage2_vault.note_builders import (
     typography as nb_typography,
     userflow as nb_userflow,
 )
+from stages.stage2_vault.note_builders import design_system as nb_design_system
 
 
 def run_vault_writer(state: RunState, settings) -> RunState:
@@ -54,7 +55,8 @@ def run_vault_writer(state: RunState, settings) -> RunState:
             "Page-Hierarchy.md": nb_hierarchy.build_hierarchy(data),
             "User-Flow.md": nb_userflow.build_userflow(data),
             "Screenshots.md": nb_screenshots.build_screenshots(data, assets_screenshots),
-            "Audit-Report.md": "---\ntitle: Audit-Report\ntype: client-audit-section\nstatus: pending\n---\n\n# Audit-Report\n\n> Wird nach Stage 3 automatisch befüllt.\n",
+            "DESIGN.md": nb_design_system.build_design_system(data),
+            "Audit-Report.md": "---\ntitle: Audit-Report\ntype: client-audit-section\nstatus: pending\n---\n\n# Audit-Report\n\n> Wird nach Stage 4 automatisch befüllt.\n",
         }
 
         for filename, content in notes.items():

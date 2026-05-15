@@ -1,5 +1,7 @@
+"""Stage 4 Audit agent — 4 categories (accessibility, seo, ux_ui, usability) + manual review."""
 import asyncio
 import json
+from datetime import date, datetime
 from pathlib import Path
 
 import anthropic
@@ -9,9 +11,16 @@ from shared import logger
 from shared.run_state import RunState, Status
 from stages.stage1_scraper.scraper import load_scraped_data
 from stages.stage1_scraper.models import ScrapedData
-from stages.stage3_audit.tools import AUDIT_TOOLS
+from stages.stage4_audit.tools import AUDIT_TOOLS
 
 _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+_ALL_CATEGORIES = ["accessibility", "seo", "ux_ui", "usability"]
+_CATEGORY_LABEL = {
+    "accessibility": "Barrierefreiheit",
+    "seo": "SEO",
+    "ux_ui": "UX/UI",
+    "usability": "Usability & Responsiveness",
+}
 
 
 class AuditAgent:
@@ -37,7 +46,7 @@ class AuditAgent:
     def _run_sync(self, system_prompt: str, user_prompt: str) -> dict:
         messages = [{"role": "user", "content": user_prompt}]
 
-        for _ in range(10):  # max 10 Iterationen
+        for _ in range(12):
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
@@ -89,38 +98,41 @@ def _build_user_prompt(data: ScrapedData, prompts_dir: Path) -> str:
         typography=data.typography,
         icons=data.icons,
         sitemap=data.sitemap,
+        spacing=data.spacing_tokens,
+        motion=data.motion_tokens,
+        components=data.components,
         tech={
             "external_scripts": data.content.external_scripts,
             "external_stylesheets": data.content.external_stylesheets,
             "lazy_images": data.content.lazy_images,
             "has_impressum": data.content.has_impressum,
             "has_privacy": data.content.has_privacy,
+            "frameworks": data.raw_assets.frameworks_detected,
+            "mobile_screenshot": data.mobile_screenshot_path,
+            "tablet_screenshot": data.tablet_screenshot_path,
         },
     )
 
 
 def _render_report_markdown(data: ScrapedData, result: dict) -> str:
-    from datetime import date
-
     findings = sorted(result["findings"], key=lambda f: _SEVERITY_ORDER.get(f.get("severity", "low"), 3))
     scores = result["scores"]
     meta = result.get("meta", {})
 
     severity_emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
-    category_label = {"accessibility": "Barrierefreiheit", "seo": "SEO", "ux_ui": "UX/UI"}
 
-    # Group by category
-    by_cat: dict[str, list] = {"accessibility": [], "seo": [], "ux_ui": []}
+    by_cat: dict[str, list] = {cat: [] for cat in _ALL_CATEGORIES}
     for f in findings:
         cat = f.get("category", "ux_ui")
         by_cat.setdefault(cat, []).append(f)
 
     findings_sections = ""
-    for cat, cat_findings in by_cat.items():
+    for cat in _ALL_CATEGORIES:
+        cat_findings = by_cat.get(cat, [])
         if not cat_findings:
             continue
         score = scores.get(cat, "—")
-        label = category_label.get(cat, cat)
+        label = _CATEGORY_LABEL.get(cat, cat)
         findings_sections += f"\n## {label} (Score: {score}/100)\n\n"
         for f in cat_findings:
             emoji = severity_emoji.get(f.get("severity", "low"), "⚪")
@@ -137,7 +149,7 @@ def _render_report_markdown(data: ScrapedData, result: dict) -> str:
             findings_sections += "---\n\n"
 
     score_table = "\n".join(
-        f"| {category_label.get(k, k)} | {v}/100 |"
+        f"| {_CATEGORY_LABEL.get(k, k)} | {v}/100 |"
         for k, v in scores.items()
     )
 
@@ -152,6 +164,7 @@ audit_date: {date.today().isoformat()}
 score_accessibility: {scores.get("accessibility", "null")}
 score_seo: {scores.get("seo", "null")}
 score_ux_ui: {scores.get("ux_ui", "null")}
+score_usability: {scores.get("usability", "null")}
 findings_total: {len(findings)}
 findings_critical: {critical_count}
 findings_high: {high_count}
@@ -220,16 +233,14 @@ async def run_audit(state: RunState, settings) -> RunState:
         state.audit.scores = result["scores"]
         state.audit.findings_count = {
             cat: sum(1 for f in result["findings"] if f.get("category") == cat)
-            for cat in ["accessibility", "seo", "ux_ui"]
+            for cat in _ALL_CATEGORIES
         }
 
         logger.success(f"Audit abgeschlossen — {len(result['findings'])} Befunde | Scores: {result['scores']}")
 
-        # Update vault with audit report
         from stages.stage2_vault.vault_writer import update_vault_audit_report
         update_vault_audit_report(state, settings, audit_md)
 
-        # Generate PDF
         from stages.stage3_audit.report_renderer import render_pdf
         pdf_path = await render_pdf(md_path, audit_dir)
         if pdf_path:

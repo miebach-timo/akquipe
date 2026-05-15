@@ -87,6 +87,55 @@ class SitemapData(BaseModel):
     all_urls: list[str] = Field(default_factory=list)
 
 
+class SpacingTokens(BaseModel):
+    common_paddings: list[str] = Field(default_factory=list)
+    common_margins: list[str] = Field(default_factory=list)
+    common_gaps: list[str] = Field(default_factory=list)
+    common_radii: list[str] = Field(default_factory=list)
+    common_shadows: list[str] = Field(default_factory=list)
+
+
+class MotionTokens(BaseModel):
+    transitions: list[str] = Field(default_factory=list)
+    animation_names: list[str] = Field(default_factory=list)
+    has_reduced_motion_support: bool = False
+    animation_libraries: list[str] = Field(default_factory=list)
+
+
+class ButtonInfo(BaseModel):
+    text: str
+    tag: str
+    classes: str
+    type: Optional[str] = None
+
+
+class FormInfo(BaseModel):
+    input_types: list[str] = Field(default_factory=list)
+    input_count: int = 0
+    has_labels: bool = False
+    required_count: int = 0
+
+
+class ComponentInventory(BaseModel):
+    buttons: list[ButtonInfo] = Field(default_factory=list)
+    forms: list[FormInfo] = Field(default_factory=list)
+    nav_type: str = "unknown"
+    nav_is_sticky: bool = False
+    nav_has_hamburger: bool = False
+    has_modal: bool = False
+    has_cards: bool = False
+    has_hero: bool = False
+    button_count: int = 0
+    form_count: int = 0
+
+
+class RawAssets(BaseModel):
+    external_stylesheets: list[str] = Field(default_factory=list)
+    external_scripts: list[str] = Field(default_factory=list)
+    frameworks_detected: list[str] = Field(default_factory=list)
+    cdns_detected: list[str] = Field(default_factory=list)
+
+
 class ScrapedData(BaseModel):
     url: str
     domain: str
@@ -99,3 +148,9 @@ class ScrapedData(BaseModel):
     icons: IconData = Field(default_factory=IconData)
     sitemap: SitemapData = Field(default_factory=SitemapData)
     screenshots: list[str] = Field(default_factory=list)
+    mobile_screenshot_path: Optional[str] = None
+    tablet_screenshot_path: Optional[str] = None
+    raw_assets: RawAssets = Field(default_factory=RawAssets)
+    spacing_tokens: SpacingTokens = Field(default_factory=SpacingTokens)
+    motion_tokens: MotionTokens = Field(default_factory=MotionTokens)
+    components: ComponentInventory = Field(default_factory=ComponentInventory)

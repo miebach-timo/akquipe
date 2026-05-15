@@ -29,12 +29,44 @@ class VaultState(BaseModel):
     error: Optional[str] = None
 
 
+class ImitateState(BaseModel):
+    status: Status = Status.PENDING
+    project_path: Optional[str] = None
+    error: Optional[str] = None
+
+
 class AuditState(BaseModel):
     status: Status = Status.PENDING
     report_md_path: Optional[str] = None
     report_pdf_path: Optional[str] = None
     scores: dict[str, int] = Field(default_factory=dict)
     findings_count: dict[str, int] = Field(default_factory=dict)
+    manual_review_approved: bool = False
+    manual_review_notes: str = ""
+    manual_review_approved_at: Optional[str] = None
+    error: Optional[str] = None
+
+
+class RedesignParams(BaseModel):
+    design_variance: int = 5      # 1=konservativ, 10=experimentell
+    motion_intensity: int = 3     # 1=kein, 10=viel Animation
+    visual_density: int = 5       # 1=luftig, 10=informationsdicht
+    style_direction: str = "auto" # "modern-corporate", "minimal", "bold", ...
+
+
+class RedesignIteration(BaseModel):
+    iteration: int
+    project_path: str
+    params: RedesignParams = Field(default_factory=RedesignParams)
+    user_feedback: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
+class RedesignState(BaseModel):
+    status: Status = Status.PENDING
+    iterations: list[RedesignIteration] = Field(default_factory=list)
+    current_iteration: int = 0
+    project_path: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -58,8 +90,10 @@ class RunState(BaseModel):
     started_at: datetime = Field(default_factory=datetime.now)
     scraper: ScraperState = Field(default_factory=ScraperState)
     vault: VaultState = Field(default_factory=VaultState)
+    imitate: ImitateState = Field(default_factory=ImitateState)
     audit: AuditState = Field(default_factory=AuditState)
-    reconstruct: ReconstructState = Field(default_factory=ReconstructState)
+    redesign: RedesignState = Field(default_factory=RedesignState)
+    reconstruct: ReconstructState = Field(default_factory=ReconstructState)  # kept for old runs
     package: PackageState = Field(default_factory=PackageState)
 
     def save(self, output_dir: Path) -> None:

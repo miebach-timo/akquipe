@@ -64,6 +64,41 @@ Erstelle einen vollständigen Audit-Report für folgende Website:
 
 ---
 
+## Spacing & Layout Tokens
+
+**Häufigste Padding-Werte:** {{ spacing.common_paddings | join(", ") | default("nicht ermittelt") }}
+**Häufigste Margin-Werte:** {{ spacing.common_margins | join(", ") | default("nicht ermittelt") }}
+**Häufigste Gap-Werte:** {{ spacing.common_gaps | join(", ") | default("nicht ermittelt") }}
+**Border-Radius:** {{ spacing.common_radii | join(", ") | default("nicht ermittelt") }}
+**Box-Shadows:** {{ spacing.common_shadows | join(", ") | default("keine") }}
+
+---
+
+## Motion & Animationen
+
+**CSS Transitions erkannt:** {{ motion.transitions | length }}
+**Animation-Namen:** {{ motion.animation_names | join(", ") | default("keine") }}
+**Animationsbibliotheken:** {{ motion.animation_libraries | join(", ") | default("—") }}
+**prefers-reduced-motion Support:** {{ "✓ vorhanden" if motion.has_reduced_motion_support else "✗ fehlt" }}
+
+---
+
+## Komponenten-Inventar
+
+**Navigations-Typ:** {{ components.nav_type }}{% if components.nav_is_sticky %} (sticky/fixed){% endif %}
+**Hamburger-Menu:** {{ "✓" if components.nav_has_hamburger else "✗" }}
+**Buttons gesamt:** {{ components.button_count }}
+**Formulare:** {{ components.form_count }}
+**Cards/Tiles erkannt:** {{ "✓" if components.has_cards else "✗" }}
+**Hero-Sektion:** {{ "✓" if components.has_hero else "✗" }}
+**Modal/Overlay:** {{ "✓" if components.has_modal else "✗" }}
+
+**Haupt-CTAs:**
+{% for btn in components.buttons[:8] %}- "{{ btn.text }}" ({{ btn.tag }})
+{% endfor %}
+
+---
+
 ## Seitenhierarchie
 
 **Seitenbaum (bis Tiefe 3):**
@@ -75,13 +110,15 @@ Erstelle einen vollständigen Audit-Report für folgende Website:
 
 ## Technische Hinweise
 
+**Framework erkannt:** {{ tech.frameworks | join(", ") | default("unbekannt") }}
 **Externe Skripte:** {{ tech.external_scripts }}
 **Externe Stylesheets:** {{ tech.external_stylesheets }}
 **Lazy Loading (img loading=lazy):** {{ tech.lazy_images }}
 **SSL (HTTPS):** {{ "✓" if url.startswith("https") else "✗ FEHLT" }}
 **Impressum-Link erkannt:** {{ "✓" if tech.has_impressum else "✗" }}
 **Datenschutz-Link erkannt:** {{ "✓" if tech.has_privacy else "✗" }}
+**Mobile Screenshot:** {{ "✓ vorhanden" if tech.mobile_screenshot else "✗ nicht erstellt" }}
 
 ---
 
-Analysiere alle oben stehenden Daten und erfasse jeden Befund mit `record_finding`. Setze dann die Scores mit `set_category_score` und schließe mit `generate_report` ab.
+Analysiere alle oben stehenden Daten und erfasse jeden Befund mit `record_finding` in allen vier Kategorien (accessibility, seo, ux_ui, usability). Setze dann die Scores mit `set_category_score` und schließe mit `generate_report` ab.

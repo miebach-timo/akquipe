@@ -7,12 +7,18 @@ from playwright.async_api import async_playwright
 from shared import logger
 from shared.run_state import RunState, Status
 from stages.stage1_scraper.extractors.colors import extract_colors
+from stages.stage1_scraper.extractors.components import extract_components
 from stages.stage1_scraper.extractors.content import extract_content, extract_meta
 from stages.stage1_scraper.extractors.icons import extract_icons
+from stages.stage1_scraper.extractors.motion import extract_motion_tokens
+from stages.stage1_scraper.extractors.raw_assets import extract_raw_assets
 from stages.stage1_scraper.extractors.screenshots import take_screenshots
 from stages.stage1_scraper.extractors.sitemap import extract_sitemap
+from stages.stage1_scraper.extractors.spacing import extract_spacing_tokens
 from stages.stage1_scraper.extractors.typography import extract_typography
-from stages.stage1_scraper.models import MetaData, ScrapedData
+from stages.stage1_scraper.models import (
+    ComponentInventory, MetaData, MotionTokens, RawAssets, ScrapedData, SpacingTokens,
+)
 
 
 async def run_scraper(state: RunState, settings) -> RunState:
@@ -55,8 +61,40 @@ async def run_scraper(state: RunState, settings) -> RunState:
             logger.dim("  → Erkenne Icons & SVGs...")
             icons = await extract_icons(page, assets_dir)
 
-            logger.dim("  → Erstelle Screenshots...")
+            logger.dim("  → Erstelle Screenshots (Desktop)...")
             screenshot_paths = await take_screenshots(page, screenshots_dir, state.domain)
+
+            logger.dim("  → Mobile + Tablet Screenshots...")
+            mobile_path = None
+            tablet_path = None
+            try:
+                await page.set_viewport_size({"width": 375, "height": 812})
+                await page.wait_for_timeout(500)
+                mobile_file = screenshots_dir / f"{state.domain}_mobile.png"
+                await page.screenshot(path=str(mobile_file), full_page=False)
+                mobile_path = str(mobile_file)
+
+                await page.set_viewport_size({"width": 768, "height": 1024})
+                await page.wait_for_timeout(500)
+                tablet_file = screenshots_dir / f"{state.domain}_tablet.png"
+                await page.screenshot(path=str(tablet_file), full_page=False)
+                tablet_path = str(tablet_file)
+
+                await page.set_viewport_size({"width": 1440, "height": 900})
+            except Exception as e:
+                logger.dim(f"    Multi-Viewport Screenshots fehlgeschlagen: {e}")
+
+            logger.dim("  → Extrahiere Raw-Assets + Framework-Detection...")
+            raw_assets_dict = await extract_raw_assets(page, scraped_dir)
+
+            logger.dim("  → Extrahiere Spacing-Tokens...")
+            spacing_dict = await extract_spacing_tokens(page)
+
+            logger.dim("  → Extrahiere Motion-Tokens...")
+            motion_dict = await extract_motion_tokens(page)
+
+            logger.dim("  → Extrahiere Komponenten-Inventar...")
+            components_dict = await extract_components(page)
 
             logger.dim("  → Crawle Seitenhierarchie...")
             sitemap = await extract_sitemap(
@@ -81,6 +119,12 @@ async def run_scraper(state: RunState, settings) -> RunState:
             icons=icons,
             sitemap=sitemap,
             screenshots=[str(p) for p in screenshot_paths],
+            mobile_screenshot_path=mobile_path,
+            tablet_screenshot_path=tablet_path,
+            raw_assets=RawAssets(**raw_assets_dict),
+            spacing_tokens=SpacingTokens(**spacing_dict),
+            motion_tokens=MotionTokens(**motion_dict),
+            components=ComponentInventory(**components_dict),
         )
 
         data_path = scraped_dir / "data.json"

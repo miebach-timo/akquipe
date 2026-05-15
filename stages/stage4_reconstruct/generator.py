@@ -1,3 +1,4 @@
+import asyncio
 import anthropic
 from pathlib import Path
 
@@ -24,7 +25,8 @@ Anforderungen (aus Audit):
 - Alle Links haben erkennbaren Fokus-Indikator (outline oder ring)
 - Tailwind CSS + TypeScript
 
-Verwende die brand tokens aus `@/lib/brand`. Kein externes Icon-Package. Gib NUR den TypeScript-Code zurück.""",
+Importiere brand tokens so: `import {{ BRAND_COLORS, BRAND_FONTS }} from '@/lib/brand';`
+Kein externes Icon-Package, kein framer-motion. Gib NUR den TypeScript-Code zurück.""",
 
     "hero": """Erstelle eine moderne React Hero-Komponente (`src/components/Hero.tsx`) für {domain}.
 
@@ -43,9 +45,10 @@ Anforderungen (aus Audit):
 - Primärer CTA mit aussagekräftigem Text (kein "Klicken Sie hier")
 - Kontrastreiche Farben (WCAG AA)
 - Responsive (mobile-first mit Tailwind)
-- Animationen mit `motion` (falls passend) oder reinem CSS
+- Nur CSS-Animationen, kein framer-motion
 
-Verwende die brand tokens aus `@/lib/brand`. Gib NUR den TypeScript-Code zurück.""",
+Importiere brand tokens so: `import {{ BRAND_COLORS, BRAND_FONTS }} from '@/lib/brand';`
+Gib NUR den TypeScript-Code zurück.""",
 
     "footer": """Erstelle einen modernen React Footer (`src/components/Footer.tsx`) für {domain}.
 
@@ -61,7 +64,8 @@ Anforderungen (aus Audit):
 - Copyright-Zeile
 - Kontrast prüfen (weißer Text auf dunklem Hintergrund: mindestens 4.5:1)
 
-Verwende die brand tokens aus `@/lib/brand`. Gib NUR den TypeScript-Code zurück.""",
+Importiere brand tokens so: `import {{ BRAND_COLORS, BRAND_FONTS }} from '@/lib/brand';`
+Gib NUR den TypeScript-Code zurück.""",
 }
 
 
@@ -117,7 +121,8 @@ async def generate_components(project_dir: Path, data: ScrapedData, client: anth
         prompt = _SECTION_PROMPTS[section].format(**template_vars)
         logger.dim(f"  → Generiere {filename}...")
 
-        response = client.messages.create(
+        response = await asyncio.to_thread(
+            client.messages.create,
             model=model,
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
